@@ -1,3 +1,13 @@
+// Interfaces
+interface Validatable {
+  value: string | number;
+  required?: boolean;
+  minLength?: number;
+  maxLength?: number;
+  min?: number;
+  max?: number;
+}
+
 // Decorators
 function AutoBind(_: any, _2: string, descriptor: PropertyDescriptor) {
   const originalMethod = descriptor.value;
@@ -10,6 +20,33 @@ function AutoBind(_: any, _2: string, descriptor: PropertyDescriptor) {
   };
 
   return adjDescriptor;
+}
+
+// Functions
+function validate(validatableInput: Validatable): boolean {
+  let isValid = true;
+
+  if(validatableInput.required) {
+    isValid = isValid && validatableInput.value.toString().trim().length != 0;
+  }
+
+  if(validatableInput.minLength != null && typeof validatableInput.value === "string") {
+    isValid = isValid && validatableInput.value.length >= validatableInput.minLength
+  }
+
+  if(validatableInput.maxLength != null && typeof validatableInput.value === "string") {
+    isValid = isValid && validatableInput.value.length <= validatableInput.maxLength
+  }
+
+  if(validatableInput.min != null && typeof validatableInput.value === "number") {
+    isValid = isValid && validatableInput.value >= validatableInput.min
+  }
+
+  if(validatableInput.max != null && typeof validatableInput.value === "number") {
+    isValid = isValid && validatableInput.value <= validatableInput.max
+  }
+
+  return isValid;
 }
 
 // Classes
@@ -70,10 +107,13 @@ class ProjectInput {
     const description = this.descInput.value;
     const people = this.peopleInput.value;
 
+    const validatableTitle: Validatable = {value: title, required: true, minLength: 6};
+    const validatableDesc: Validatable = {value: description, required: true, minLength: 10};
+    const validatablePeople: Validatable = {value: people, required: true, min: 1};
     if (
-      title.trim().length === 0 ||
-      description.trim().length === 0 ||
-      people.trim().length === 0
+      !validate(validatableTitle) ||
+      !validate(validatableDesc) ||
+      !validate(validatablePeople)
     ) {
       alert("Please fill all inputs");
     } else {
