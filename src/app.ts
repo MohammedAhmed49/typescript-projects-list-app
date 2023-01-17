@@ -26,24 +26,38 @@ function AutoBind(_: any, _2: string, descriptor: PropertyDescriptor) {
 function validate(validatableInput: Validatable): boolean {
   let isValid = true;
 
-  if(validatableInput.required) {
+  if (validatableInput.required) {
     isValid = isValid && validatableInput.value.toString().trim().length != 0;
   }
 
-  if(validatableInput.minLength != null && typeof validatableInput.value === "string") {
-    isValid = isValid && validatableInput.value.length >= validatableInput.minLength
+  if (
+    validatableInput.minLength != null &&
+    typeof validatableInput.value === "string"
+  ) {
+    isValid =
+      isValid && validatableInput.value.length >= validatableInput.minLength;
   }
 
-  if(validatableInput.maxLength != null && typeof validatableInput.value === "string") {
-    isValid = isValid && validatableInput.value.length <= validatableInput.maxLength
+  if (
+    validatableInput.maxLength != null &&
+    typeof validatableInput.value === "string"
+  ) {
+    isValid =
+      isValid && validatableInput.value.length <= validatableInput.maxLength;
   }
 
-  if(validatableInput.min != null && typeof validatableInput.value === "number") {
-    isValid = isValid && validatableInput.value >= validatableInput.min
+  if (
+    validatableInput.min != null &&
+    typeof validatableInput.value === "number"
+  ) {
+    isValid = isValid && validatableInput.value >= validatableInput.min;
   }
 
-  if(validatableInput.max != null && typeof validatableInput.value === "number") {
-    isValid = isValid && validatableInput.value <= validatableInput.max
+  if (
+    validatableInput.max != null &&
+    typeof validatableInput.value === "number"
+  ) {
+    isValid = isValid && validatableInput.value <= validatableInput.max;
   }
 
   return isValid;
@@ -107,9 +121,21 @@ class ProjectInput {
     const description = this.descInput.value;
     const people = this.peopleInput.value;
 
-    const validatableTitle: Validatable = {value: title, required: true, minLength: 6};
-    const validatableDesc: Validatable = {value: description, required: true, minLength: 10};
-    const validatablePeople: Validatable = {value: people, required: true, min: 1};
+    const validatableTitle: Validatable = {
+      value: title,
+      required: true,
+      minLength: 6,
+    };
+    const validatableDesc: Validatable = {
+      value: description,
+      required: true,
+      minLength: 10,
+    };
+    const validatablePeople: Validatable = {
+      value: people,
+      required: true,
+      min: 1,
+    };
     if (
       !validate(validatableTitle) ||
       !validate(validatableDesc) ||
@@ -128,4 +154,38 @@ class ProjectInput {
   }
 }
 
+class ProjectList {
+  templateEl: HTMLTemplateElement;
+  hostEl: HTMLElement;
+  contentEl: HTMLElement;
+
+  constructor(private type: "active" | "finished") {
+    this.templateEl = <HTMLTemplateElement>(
+      document.getElementById("project-list")
+    );
+    this.hostEl = <HTMLElement>document.getElementById("app");
+
+    const importedNode = document.importNode(this.templateEl.content, true);
+    this.contentEl = <HTMLElement>importedNode.firstElementChild;
+
+    this.contentEl.id = `${type}-projects`;
+
+    this.attatchElement();
+    this.renderContent();
+  }
+
+  private attatchElement() {
+    this.hostEl.insertAdjacentElement("beforeend", this.contentEl);
+  }
+
+  private renderContent() {
+    const listId = `${this.type}-projects-list`;
+    this.contentEl.querySelector("ul")!.id = listId;
+    this.contentEl.querySelector("h2")!.textContent =
+      this.type.toUpperCase() + "PROJECTS";
+  }
+}
+
 const project = new ProjectInput();
+const activeProjects = new ProjectList("active");
+const finishedProjects = new ProjectList("finished");
