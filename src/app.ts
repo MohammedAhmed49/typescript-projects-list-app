@@ -64,6 +64,66 @@ function validate(validatableInput: Validatable): boolean {
 }
 
 // Classes
+
+// Project status is only active or finished
+enum ProjectStatus {
+  Active,
+  Finished,
+}
+
+type Listener = (items: Project[]) => void;
+
+// Project class to use it in other classes
+class Project {
+  constructor(
+    public id: string,
+    public title: string,
+    public description: string,
+    public people: number,
+    public status: ProjectStatus
+  ) {}
+}
+
+// Singletone pattern is used to make sure only one instance of ProjectState is created
+class ProjectState {
+  private projects: Project[] = [];
+  private static instance: ProjectState;
+
+  // List of listener functions used from outside this class to listen to any change in projects
+  private listeners: Listener[] = [];
+
+  private constructor() {}
+
+  static getInstance() {
+    if (this.instance) {
+      return this.instance;
+    }
+    this.instance = new ProjectState();
+    return this.instance;
+  }
+
+  addProject(title: string, description: string, people: number) {
+    const project = new Project(
+      Math.random().toString(),
+      title,
+      description,
+      people,
+      ProjectStatus.Active
+    );
+    this.projects.push(project);
+
+    // Call all listeners from outside to see the changes to projects
+    for (let listenerFn of this.listeners) {
+      listenerFn(this.projects.slice());
+    }
+  }
+
+  addListener(listenerFn: Listener) {
+    this.listeners.push(listenerFn);
+  }
+}
+
+// ProjectInput class for the form of adding a new project
 class ProjectInput {
   templateEl: HTMLTemplateElement;
   hostEl: HTMLElement;
@@ -111,7 +171,7 @@ class ProjectInput {
     event.preventDefault();
     const userInput = this.getInputs();
     if (userInput) {
-      console.log(userInput);
+      state.addProject(userInput[0], userInput[1], userInput[2]);
       this.clearInputs();
     }
   }
@@ -124,12 +184,12 @@ class ProjectInput {
     const validatableTitle: Validatable = {
       value: title,
       required: true,
-      minLength: 6,
+      minLength: 2,
     };
     const validatableDesc: Validatable = {
       value: description,
       required: true,
-      minLength: 10,
+      minLength: 3,
     };
     const validatablePeople: Validatable = {
       value: people,
@@ -154,10 +214,13 @@ class ProjectInput {
   }
 }
 
+// ProjectList class for acitve and finished lists
 class ProjectList {
   templateEl: HTMLTemplateElement;
   hostEl: HTMLElement;
   contentEl: HTMLElement;
+  assignedProjects: Project[] = [];
+  listElId: string;
 
   constructor(private type: "active" | "finished") {
     this.templateEl = <HTMLTemplateElement>(
@@ -168,10 +231,22 @@ class ProjectList {
     const importedNode = document.importNode(this.templateEl.content, true);
     this.contentEl = <HTMLElement>importedNode.firstElementChild;
 
-    this.contentEl.id = `${type}-projects`;
+    this.contentEl.id = `${this.type}-projects`;
+
+    this.listElId = `${this.type}-projects-list`;
 
     this.attatchElement();
     this.renderContent();
+
+    state.addListener((projects: Project[]) => {
+      this.assignedProjects = projects.filter((project) => {
+        if (this.type === "active") {
+          return project.status === ProjectStatus.Active;
+        }
+        return project.status === ProjectStatus.Finished;
+      });
+      this.renderProjects();
+    });
   }
 
   private attatchElement() {
@@ -179,12 +254,23 @@ class ProjectList {
   }
 
   private renderContent() {
-    const listId = `${this.type}-projects-list`;
-    this.contentEl.querySelector("ul")!.id = listId;
+    this.contentEl.querySelector("ul")!.id = this.listElId;
     this.contentEl.querySelector("h2")!.textContent =
       this.type.toUpperCase() + "PROJECTS";
   }
+
+  private renderProjects() {
+    const listEl = <HTMLElement>document.getElementById(this.listElId);
+    listEl.innerHTML = "";
+    for (let project of this.assignedProjects) {
+      const newNode = document.createElement("li");
+      newNode.textContent = project.title;
+      listEl?.appendChild(newNode);
+    }
+  }
 }
+
+const state = ProjectState.getInstance();
 
 const project = new ProjectInput();
 const activeProjects = new ProjectList("active");
