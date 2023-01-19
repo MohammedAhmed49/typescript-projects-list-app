@@ -131,9 +131,7 @@ class ProjectState extends State<Project> {
 
 // Abstract class is created to be inhereted in ProjectInput and ProjectList as both are using same features to create component and append it in HTML
 // Generics here are used because hostEl and contentElement might be differet in both ProjectInput and ProjectList
-
 type InsertAt = "beforeend" | "afterbegin";
-
 abstract class ProjectComponent<T extends HTMLElement, U extends HTMLElement> {
   templateEl: HTMLTemplateElement;
   hostEl: T;
@@ -240,6 +238,23 @@ class ProjectInput extends ProjectComponent<HTMLDivElement, HTMLFormElement> {
   }
 }
 
+// ProjectItem class is used to manage project li items in HTML
+class ProjectItem extends ProjectComponent<HTMLUListElement, HTMLLIElement> {
+  constructor(hostId: string, private project: Project) {
+    super("single-project", hostId, "afterbegin", project.id);
+    this.renderContent();
+  }
+
+  configure() {}
+
+  renderContent() {
+    this.contentEl.querySelector("h2")!.textContent = this.project.title;
+    this.contentEl.querySelector("h3")!.textContent =
+      this.project.people.toString();
+    this.contentEl.querySelector("p")!.textContent = this.project.description;
+  }
+}
+
 // ProjectList class for acitve and finished lists
 class ProjectList extends ProjectComponent<HTMLDivElement, HTMLElement> {
   assignedProjects: Project[] = [];
@@ -276,9 +291,7 @@ class ProjectList extends ProjectComponent<HTMLDivElement, HTMLElement> {
     const listEl = <HTMLElement>document.getElementById(this.listElId);
     listEl.innerHTML = "";
     for (let project of this.assignedProjects) {
-      const newNode = document.createElement("li");
-      newNode.textContent = project.title;
-      listEl?.appendChild(newNode);
+      new ProjectItem(this.contentEl.querySelector("ul")!.id, project);
     }
   }
 }
