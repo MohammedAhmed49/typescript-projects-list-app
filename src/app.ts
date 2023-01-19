@@ -71,7 +71,7 @@ enum ProjectStatus {
   Finished,
 }
 
-type Listener = (items: Project[]) => void;
+type Listener<T> = (items: T[]) => void;
 
 // Project class to use it in other classes
 class Project {
@@ -84,15 +84,25 @@ class Project {
   ) {}
 }
 
+// Abstract State class in case we are creating multible classes in the future
+abstract class State<T> {
+  protected listeners: Listener<T>[] = [];
+
+  addListener(listenerFn: Listener<T>) {
+    this.listeners.push(listenerFn);
+  }
+}
+
 // Singletone pattern is used to make sure only one instance of ProjectState is created
-class ProjectState {
+class ProjectState extends State<Project> {
   private projects: Project[] = [];
   private static instance: ProjectState;
 
   // List of listener functions used from outside this class to listen to any change in projects
-  private listeners: Listener[] = [];
 
-  private constructor() {}
+  private constructor() {
+    super();
+  }
 
   static getInstance() {
     if (this.instance) {
@@ -117,54 +127,70 @@ class ProjectState {
       listenerFn(this.projects.slice());
     }
   }
+}
 
-  addListener(listenerFn: Listener) {
-    this.listeners.push(listenerFn);
+// Abstract class is created to be inhereted in ProjectInput and ProjectList as both are using same features to create component and append it in HTML
+// Generics here are used because hostEl and contentElement might be differet in both ProjectInput and ProjectList
+
+type InsertAt = "beforeend" | "afterbegin";
+
+abstract class ProjectComponent<T extends HTMLElement, U extends HTMLElement> {
+  templateEl: HTMLTemplateElement;
+  hostEl: T;
+  contentEl: U;
+
+  constructor(
+    tempelateId: string,
+    hostId: string,
+    appendPosition: InsertAt,
+    newElementId?: string
+  ) {
+    this.templateEl = <HTMLTemplateElement>document.getElementById(tempelateId);
+
+    this.hostEl = <T>document.getElementById(hostId);
+
+    const importedNode = document.importNode(this.templateEl.content, true);
+
+    this.contentEl = <U>importedNode.firstElementChild;
+    if (newElementId) {
+      this.contentEl.id = newElementId;
+    }
+    this.attachElement(appendPosition);
   }
+
+  private attachElement(appendPosition: InsertAt) {
+    this.hostEl.insertAdjacentElement(appendPosition, this.contentEl);
+  }
+
+  abstract configure(): void;
+  abstract renderContent(): void;
 }
 
 // ProjectInput class for the form of adding a new project
-class ProjectInput {
-  templateEl: HTMLTemplateElement;
-  hostEl: HTMLElement;
-  contentElement: HTMLElement;
+class ProjectInput extends ProjectComponent<HTMLDivElement, HTMLFormElement> {
   titleInput: HTMLInputElement;
   descInput: HTMLInputElement;
   peopleInput: HTMLInputElement;
 
   constructor() {
-    this.templateEl = <HTMLTemplateElement>(
-      document.getElementById("project-input")
-    );
+    super("project-input", "app", "afterbegin", "user-input");
 
-    this.hostEl = <HTMLElement>document.getElementById("app");
-
-    const importedNode = document.importNode(this.templateEl.content, true);
-
-    this.contentElement = <HTMLElement>importedNode.firstElementChild;
-    this.contentElement.id = "user-input";
-
-    this.titleInput = <HTMLInputElement>(
-      this.contentElement.querySelector("#title")
-    );
+    this.titleInput = <HTMLInputElement>this.contentEl.querySelector("#title");
     this.descInput = <HTMLInputElement>(
-      this.contentElement.querySelector("#description")
+      this.contentEl.querySelector("#description")
     );
     this.peopleInput = <HTMLInputElement>(
-      this.contentElement.querySelector("#people")
+      this.contentEl.querySelector("#people")
     );
 
     this.configure();
-    this.attachElemnt();
   }
 
-  private configure() {
-    this.contentElement.addEventListener("submit", this.onSubmitHandler);
+  configure() {
+    this.contentEl.addEventListener("submit", this.onSubmitHandler);
   }
 
-  private attachElemnt() {
-    this.hostEl.insertAdjacentElement("afterbegin", this.contentElement);
-  }
+  renderContent() {}
 
   @AutoBind
   private onSubmitHandler(event: Event) {
@@ -215,29 +241,20 @@ class ProjectInput {
 }
 
 // ProjectList class for acitve and finished lists
-class ProjectList {
-  templateEl: HTMLTemplateElement;
-  hostEl: HTMLElement;
-  contentEl: HTMLElement;
+class ProjectList extends ProjectComponent<HTMLDivElement, HTMLElement> {
   assignedProjects: Project[] = [];
   listElId: string;
 
   constructor(private type: "active" | "finished") {
-    this.templateEl = <HTMLTemplateElement>(
-      document.getElementById("project-list")
-    );
-    this.hostEl = <HTMLElement>document.getElementById("app");
-
-    const importedNode = document.importNode(this.templateEl.content, true);
-    this.contentEl = <HTMLElement>importedNode.firstElementChild;
-
-    this.contentEl.id = `${this.type}-projects`;
+    super("project-list", "app", "beforeend", `${type}-projects`);
 
     this.listElId = `${this.type}-projects-list`;
 
-    this.attatchElement();
     this.renderContent();
+    this.configure();
+  }
 
+  configure() {
     state.addListener((projects: Project[]) => {
       this.assignedProjects = projects.filter((project) => {
         if (this.type === "active") {
@@ -249,11 +266,7 @@ class ProjectList {
     });
   }
 
-  private attatchElement() {
-    this.hostEl.insertAdjacentElement("beforeend", this.contentEl);
-  }
-
-  private renderContent() {
+  renderContent() {
     this.contentEl.querySelector("ul")!.id = this.listElId;
     this.contentEl.querySelector("h2")!.textContent =
       this.type.toUpperCase() + "PROJECTS";
