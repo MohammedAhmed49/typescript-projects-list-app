@@ -1,10 +1,10 @@
-import { AutoBind } from "../decorators/auto-bind.js";
-import { ProjectStatus } from "../enums/project-status.js";
-import { DragTarget } from "../interfaces/drag-drop.js";
-import { Project } from "../models/project.js";
-import { state } from "../state/project-state.js";
-import { ProjectComponent } from "./base-component.js";
-import { ProjectItem } from "./project-item.js";
+import { AutoBind } from "../decorators/auto-bind";
+import { ProjectStatus } from "../enums/project-status";
+import { DragTarget } from "../interfaces/drag-drop";
+import { Project } from "../models/project";
+import { state } from "../state/project-state";
+import { ProjectComponent } from "./base-component";
+import { ProjectItem } from "./project-item";
 
 // ProjectList class for acitve and finished lists
 export class ProjectList

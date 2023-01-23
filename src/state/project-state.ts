@@ -1,5 +1,5 @@
-import { ProjectStatus } from '../enums/project-status.js';
-import { Project } from './../models/project.js';
+import { ProjectStatus } from '../enums/project-status';
+import { Project } from './../models/project';
 type Listener<T> = (items: T[]) => void;
 
 // Abstract State class in case we are creating multible classes in the future

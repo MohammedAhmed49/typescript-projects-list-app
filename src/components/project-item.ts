@@ -1,7 +1,7 @@
-import { AutoBind } from "../decorators/auto-bind.js";
-import { Draggable } from "../interfaces/drag-drop.js";
-import { Project } from "../models/project.js";
-import { ProjectComponent } from "./base-component.js";
+import { AutoBind } from "../decorators/auto-bind";
+import { Draggable } from "../interfaces/drag-drop";
+import { Project } from "../models/project";
+import { ProjectComponent } from "./base-component";
 
 // ProjectItem class is used to manage project li items in HTML
 export class ProjectItem

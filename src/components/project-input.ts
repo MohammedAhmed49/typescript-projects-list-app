@@ -1,8 +1,8 @@
-import { state } from './../state/project-state.js';
-import { AutoBind } from "../decorators/auto-bind.js";
-import { ProjectComponent } from "./base-component.js";
-import { Validatable } from '../interfaces/validatable.js';
-import { validate } from '../utils/validate.js';
+import { state } from './../state/project-state';
+import { AutoBind } from "../decorators/auto-bind";
+import { ProjectComponent } from "./base-component";
+import { Validatable } from '../interfaces/validatable';
+import { validate } from '../utils/validate';
 
 // ProjectInput class for the form of adding a new project
 export class ProjectInput extends ProjectComponent<
